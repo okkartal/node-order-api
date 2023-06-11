@@ -8,6 +8,7 @@ const bodyParser = require('body-parser');
 const expressValidator = require('express-validator');
 const dotenv = require('dotenv');
 dotenv.config();
+const errorHandler = require('./middlewares/errorHandler');
 
 const connectDB = require('./config/dbConn');
 //db connection
@@ -23,8 +24,12 @@ app.use(morgan('dev'));
 app.use(bodyParser.json());
 app.use(expressValidator());
 app.use("/", require('./routes/orders'));
+app.use(errorHandler);
 
 const port = process.env.PORT || 8080;
-app.listen(port, () => {
-    console.log(`A node js API is listening in port : ${port}`)
-});
+
+mongoose.connection.once('open', () => {
+    app.listen(port, () => {
+        console.log(`A node js API is listening in port : ${port}`)
+    });
+})
