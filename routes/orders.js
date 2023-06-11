@@ -14,7 +14,7 @@ const router = express.Router();
 router.get("/", getOrders);
 router.get("/:id", getOrder);
 router.post("/", validator.createOrderValidator, createOrder);
-router.put("/:id", validator.updateOrderValidator, updateOrder);
+router.put("/", validator.updateOrderValidator, updateOrder);
 router.delete("/:id", deleteOrder);
 
 

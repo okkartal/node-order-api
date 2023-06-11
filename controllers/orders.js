@@ -3,7 +3,7 @@ const Order = require("../models/orders");
 exports.getOrders = (req, res) => {
     Order.find().select("_id orderNumber quantity")
         .then((orders) => {
-            res.json({
+            res.status(200).json({
                 orders
             })
         })
@@ -11,31 +11,54 @@ exports.getOrders = (req, res) => {
 };
 
 exports.getOrder = (req, res) => {
+
     Order.findOne({
             _id: req.params.id
         }).select("_id orderNumber quantity")
         .then((orders) => {
-            res.json({
+            res.status(200).json({
                 orders
             })
         })
         .catch(err => console.log(err))
 };
 
-exports.createOrder = (req, res) => {
+exports.createOrder = async (req, res) => {
+
+    const {
+        orderNumber,
+        quantity
+    } = req.body;
+
+    if (!orderNumber || !quantity) return res.status(400).json({
+        'message': 'orderNumber and quantity are required'
+    });
+
+    //check for duplicate
+    const duplicate = await Order.findOne({
+        orderNumber: orderNumber
+    });
+
+    if (duplicate) {
+        return res.status(400).json({
+            'message': `This orderNumber : ${orderNumber}  in use`
+        });
+    }
+
     Order.create(req.body)
         .then(order => {
-            res.send(201, {
-                order
-            });
+            res.status(201).json(order);
         })
-        .catch(err => res.send(404, `An error occured while creating an order ${err}`))
+        .catch(err => res.send(404).json({
+            'message': `An error occured while creating an order ${err}`
+        }))
 }
 
 
-exports.updateOrder = (req, res) => {
+exports.updateOrder = async (req, res) => {
+
     Order.findOneAndUpdate({
-            _id: req.params.id
+            _id: req.body.id
         }, {
             $set: {
                 quantity: req.body.quantity
@@ -43,20 +66,25 @@ exports.updateOrder = (req, res) => {
         }, {
             upsert: true
         })
-        .then(order => {
-            res.send(204, {
-                order
-            });
+        .then(result => {
+            res.status(204).json(result)
         })
-        .catch(err => res.send(404, `An error occured while updating an order ${err}`));
+        .catch(err => res.send(404).json({
+            'message': `An error occured while updating an order ${err}`
+        }));
 }
 
 exports.deleteOrder = (req, res) => {
-    Order.findOneAndRemove({
+
+    return Order.findOneAndRemove({
             _id: req.params.id
         })
         .then(result => {
-            res.send(204, 'Order is deleted');
+            res.status(204).json({
+                'message': 'Order is deleted'
+            });
         })
-        .catch(err => res.send(404, `An error occured while deleting an order ${err}`));
+        .catch(err => res.status(404).json({
+            'message': `An error occured while deleting an order ${err}`
+        }));
 }
